@@ -1,5 +1,5 @@
 # used datasets exceeding github size limit
-datasets/
+external datasets/
 
 #_______________________________________
 # gitignore R template
