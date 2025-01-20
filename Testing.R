@@ -9,29 +9,20 @@ library(taxadb)
 library(rgbif)
 library(sf)
 library(raster)
+library(rredlist)
+library(openxlsx)
+library(stringr)
 #library(predictsFunctions)
 
 
 
 
 #___________________________________________________________________________
-#2. ACCESSING DATABASES ####
+#2. AFFINITY DATA MINING ####
 
 
 #___________________________________________________________________________
 ## GBIF ####
-
-### Defining Europe’s Bounding Box and Creating Grid ####
-
-# Define the extent for Europe (using a more precise bounding box)
-europe_extent <- extent(-25.0, 60.0, 36.0, 71.0)
-
-# Create a grid (50 km x 50 km)
-grid_res <- 50000  # 50 km resolution
-europe_grid <- raster(europe_extent, res = grid_res)
-
-# Convert the grid to an SF object for easier manipulation
-europe_grid_sf <- st_as_sf(as(europe_grid, "SpatialGrid"))
 
 
 
@@ -39,9 +30,6 @@ europe_grid_sf <- st_as_sf(as(europe_grid, "SpatialGrid"))
 
 # testing with 1000 records each - how far do we take this??
 
-# Temporal limits of data
-#start_year <- 1990
-#end_year <- 2025 
 
 # Fetch Birds (Aves)
 GBIF_bird_data <- occ_search(
@@ -67,8 +55,8 @@ GBIF_mammal_data <- occ_search(
 
 # Combine bird and mammal data
 all_data <- bind_rows(
-  GBIF_bird_data, 
-  GBIF_mammal_data
+  GBIF_bird_data$data, 
+  GBIF_mammal_data$data
 )
 
 # Clean the data (e.g., remove duplicates, keep only relevant columns)
@@ -82,6 +70,8 @@ pan_european_abundances <- cleaned_data %>%
   group_by(species, year) %>%
   summarize(abundance = n(), .groups = "drop")
 
+# quite low abundance numbers, why is year exclusively 2025?
+summary(pan_european_abundances$year)
 
 ### Exporting Data ####
 write.csv(pan_european_abundances, "own datasets/GBIF_abundances_pan_european.csv", row.names = FALSE)
@@ -142,7 +132,7 @@ write.csv(final_abundance_grid, "GBIF_abundance_grid_europe.csv", row.names = FA
 #___________________________________________________________________________
 ##  BioTIME ####
 
-biotime = read.csv("datasets/BioTIMEQuery_24_06_2021.csv")
+biotime = read.csv("external datasets/BioTIMEQuery_24_06_2021.csv")
 
 str(biotime)
 summary(biotime)
@@ -157,7 +147,37 @@ hist(resurvey_2020$YEAR)
 
 
 
+### adding metadata ####
+
+biotime_metadata = read.csv("external datasets/BioTIMEMetadata_24_06_2021.csv")
+str(biotime_metadata)
+
+
+biotime <- biotime %>%
+  left_join(
+    biotime_metadata %>% 
+      dplyr::select(STUDY_ID, REALM, HABITAT, PROTECTED_AREA, BIOME_MAP, ABUNDANCE_TYPE, TAXA),
+    by = "STUDY_ID"
+  )
+
+str(biotime)
+
+
+biotime$HABITAT = as.factor(biotime$HABITAT)
+summary(biotime$HABITAT)
+
+
+
 ### filtering for birds and mammals ####
+
+# approach 1:
+biotime$TAXA = as.factor(biotime$TAXA)
+summary(biotime$TAXA)
+
+biotime_birds_mammals <- biotime %>% 
+  filter(TAXA %in% c("Birds", "Mammals"))
+
+# approach 2:
 
 # Step 1: Fetch list of birds and mammals from taxadb using pull()
 bird_mammal_families <- taxa_tbl("itis") %>% 
@@ -178,61 +198,65 @@ biotime_cleaned <- biotime_cleaned %>%
 biotime_cleaned$CLASS = as.factor(biotime_cleaned$CLASS)
 summary(biotime_cleaned$CLASS)
 
-biotime_cleaned$PLOT = as.factor(biotime_cleaned$PLOT)
-summary(biotime_cleaned$PLOT)
+
+# comparing numbers
+nrow(biotime_cleaned)/nrow(biotime_birds_mammals)
+
+
 
 #write.csv(biotime_cleaned, "own datasets/BioTIME_aves_mammalia.csv", row.names = FALSE)
 # too large for GitHub
 
 
+
+### Filtering for terrestrial occurences ####
+
+biotime_terrestrial = biotime_cleaned |> 
+  filter(REALM == "Terrestrial")
+
+nrow(biotime_terrestrial)/nrow(biotime_cleaned)
+
+
+# checking habitats
+summary(biotime_terrestrial$HABITAT)
+# no information on land use!
+
+
+
 ### filtering for European occurences ####
 
-biotime_europe <- biotime_cleaned %>%
-  filter(LATITUDE >= 36.0 & LATITUDE <= 71.0 & 
-           LONGITUDE >= -25.0 & LONGITUDE <= 60.0)
+#biotime_europe <- biotime_cleaned %>%
+#  filter(LATITUDE >= 36.0 & LATITUDE <= 71.0 & 
+#           LONGITUDE >= -25.0 & LONGITUDE <= 60.0)
 
 
 
 ### filtering for 1990-2010 gap and reoccuring species ####
 
 # Step 1: Filter the dataset for the two time blocks
-biotime_filtered <- biotime_europe %>%
-  filter(YEAR <= 1990 | YEAR >= 2010)
+#biotime_filtered <- biotime_europe %>%
+#  filter(YEAR <= 1990 | YEAR >= 2010)
 
 # Step 2: Identify species present in both time blocks within each STUDY_ID
-species_in_both_blocks <- biotime_filtered %>%
-  mutate(TIME_BLOCK = case_when(
-    YEAR <= 1990 ~ "Before_1990",
-    YEAR >= 2010 ~ "After_2010"
-  )) %>%
-  group_by(STUDY_ID, GENUS_SPECIES) %>%
-  summarize(
-    blocks_observed = n_distinct(TIME_BLOCK),
-    .groups = "drop"
-  ) %>%
-  filter(blocks_observed == 2) %>%  # Only species present in both blocks
-  pull(GENUS_SPECIES)
+#species_in_both_blocks <- biotime_filtered %>%
+#  mutate(TIME_BLOCK = case_when(
+#    YEAR <= 1990 ~ "Before_1990",
+#    YEAR >= 2010 ~ "After_2010"
+#  )) %>%
+#  group_by(STUDY_ID, GENUS_SPECIES) %>%
+#  summarize(
+#    blocks_observed = n_distinct(TIME_BLOCK),
+#    .groups = "drop"
+#  ) %>%
+#  filter(blocks_observed == 2) %>%  # Only species present in both blocks
+#  pull(GENUS_SPECIES)
 
 # Step 3: Filter the dataset to keep only those species
-biotime_final <- biotime_filtered %>%
-  filter(GENUS_SPECIES %in% species_in_both_blocks)
+#biotime_final <- biotime_filtered %>%
+#  filter(GENUS_SPECIES %in% species_in_both_blocks)
 
-# Step 4: Optional - Export the filtered dataset
-write.csv(biotime_final, "own datasets/BioTIME_filtered.csv", row.names = FALSE)
-
-# habitat data??
-
-
-
-
-#___________________________________________________________________________
-## WorldClim ####
-
-wc_data <- worldclim_global(var = "bio", res = 10, path = "./datasets") # downloading BioClim variables at 10-minute resolution
-
-bio1 <- wc_data[[1]] # Loading specific variable (e.g., Bio1 - Annual Mean Temperature)
-
-plot(bio1)
+### exporting dataset ####
+write.csv(biotime_europe, "own datasets/BioTIME_filtered.csv", row.names = FALSE)
 
 
 
@@ -267,4 +291,30 @@ plot(bio1)
 #  labs(x = "Measurement",
 #       y = "Frequency") +
 #  theme_minimal()
+
+
+
+### filtering for birds and mammals ####
+
+
+
+### Filtering for terrestrial occurences ####
+
+
+
+### filtering for European occurences ####
+
+
+
+#___________________________________________________________________________
+#3. CLIMATE DATA MINING ####
+
+#___________________________________________________________________________
+## WorldClim ####
+
+#wc_data <- worldclim_global(var = "bio", res = 10, path = "./external datasets") # downloading BioClim variables at 10-minute resolution
+
+#bio1 <- wc_data[[1]] # Loading specific variable (e.g., Bio1 - Annual Mean Temperature)
+
+#plot(bio1)
 
