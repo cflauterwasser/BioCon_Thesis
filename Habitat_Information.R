@@ -12,7 +12,6 @@ library(jsonlite)
 
 
 
-
 #___________________________________________________________________________
 ## ASM European Mammal Species ####
 
@@ -221,7 +220,7 @@ head(european_bird_habitats)
 
 
 #___________________________________________________________________________
-## GBIF Habitat Data ####
+## Other Habitat Data Sources ####
 
 # Query EUNIS API
 species_name <- "Vulpes vulpes"
@@ -261,8 +260,6 @@ european_mammal_habitats$`Binomial Name` <- paste(european_mammal_habitats$Genus
 
 # Select and rename columns to match the bird dataset structure
 european_mammals <- european_mammal_habitats[, c("Class", "Order", "Family", "Binomial Name", "Habitats_IUCN", "Human_modified_IUCN")]
-colnames(european_mammals)[colnames(european_mammals) == "Order"] <- "order"
-colnames(european_mammals)[colnames(european_mammals) == "Family"] <- "family"
 
 # Ensure column names match the bird dataset
 european_birds <- european_bird_habitats
