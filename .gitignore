@@ -1,6 +1,9 @@
 # used datasets exceeding github size limit
 external datasets/
 
+# ingnore test script for not fully developed ideas
+Testing.R
+
 #_______________________________________
 # gitignore R template
 
