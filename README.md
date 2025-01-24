@@ -1,6 +1,6 @@
 # Master's Thesis Repository
 
-## [Table of Contents:]{.underline}
+## Table of Contents:
 
 #### Habitat_Information.R
 
