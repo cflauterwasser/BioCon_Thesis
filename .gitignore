@@ -1,6 +1,12 @@
 # used datasets exceeding github size limit
 external datasets/
 
+# plots
+plots/
+
+# maps
+gadm/
+
 # ingnore test script for not fully developed ideas
 Testing.R
 
