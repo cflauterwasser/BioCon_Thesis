@@ -1,5 +1,11 @@
-# used datasets exceeding github size limit
+# external datasets exceeding github size limit
 external datasets/
+
+# own/processed datasets exceeding github size limit
+own datasets/m_a2015_cleaned.csv
+own datasets/m_b2000_cleaned.csv
+own datasets/ebba1_cleaned.csv
+own datasets/ebba2_cleaned.csv
 
 # plots
 plots/
