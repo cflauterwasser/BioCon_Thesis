@@ -426,7 +426,7 @@ colnames(m_combined_species_list) <- tools::toTitleCase(colnames(m_combined_spec
 head(m_combined_species_list)
 
 # Export file
-write.csv(m_combined_species_list, "own datasets/Mammal_Species_List.csv", row.names = FALSE)
+write.csv(m_combined_species_list, "own datasets/Species_List_Mammals.csv", row.names = FALSE)
 
 
 
@@ -491,7 +491,7 @@ ebba2 = ebba2 |>
 
 check.levels(ebba2$occurrence)
 
-uniqueN(ebba2$birdlife_scientific_name) #30 species, contact responsible people
+uniqueN(ebba2$birdlife_scientific_name) #617 species
 
 
 # add Class, Order and Family
@@ -548,7 +548,7 @@ b_species_list <- bind_rows(b1_species_list, b2_species_list) %>%
   summarise(Count = sum(Count), .groups = "drop")
 
 # Export file
-write.csv(b_species_list, "own datasets/Bird_Species_List.csv", row.names = FALSE)
+write.csv(b_species_list, "own datasets/Species_List_Birds.csv", row.names = FALSE)
 
 
 

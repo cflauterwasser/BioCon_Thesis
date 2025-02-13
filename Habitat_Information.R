@@ -32,7 +32,7 @@ split_species <- function(species_vector) {
 #___________________________________________________________________________
 ## European Mammal Species ####
 
-european_mammals = read.csv("own datasets/Mammal_Species_List.csv")
+european_mammals = read.csv("own datasets/Species_List_Mammals.csv")
 
 european_mammals = european_mammals |> 
   mutate(Genus = split_species(european_mammals$Species)$Genus) |> 
@@ -47,7 +47,7 @@ str(european_mammals)
 #___________________________________________________________________________
 ## European Bird Species ####
 
-european_birds = read.csv("own datasets/Bird_Species_List.csv")
+european_birds = read.csv("own datasets/Species_List_Birds.csv")
 
 european_birds = european_birds |> 
   mutate(Genus = split_species(european_birds$Species)$Genus) |> 
@@ -141,8 +141,9 @@ european_mammal_habitats = european_mammal_habitats[, c("Class", "Order", "Famil
 
 head(european_mammal_habitats)
 
-write.csv(european_mammal_habitats, "own datasets/Mammal_Habitat_Information.csv")
+write.csv(european_mammal_habitats, "own datasets/Habitat_Information_Mammals.csv")
 
+write.csv(failed_mammal_species, "own datasets/Habitat_Information_Failed_Mammals.csv")
 
 
 #### Birds ####
@@ -171,7 +172,9 @@ european_bird_habitats = european_bird_habitats[, c("Class", "Order", "Family", 
 
 head(european_mammal_habitats)
 
-write.csv(european_bird_habitats, "own datasets/Bird_Habitat_Information.csv")
+write.csv(european_bird_habitats, "own datasets/Habitat_Information_Birds.csv")
+
+write.csv(failed_bird_species, "own datasets/Habitat_Information_Failed_Birds.csv")
 
 
 
@@ -191,4 +194,4 @@ head(european_species_habitats)
 #___________________________________________________________________________
 ## Exporting Dataset ####
 
-write.csv(european_species_habitats, "own datasets/Complete_Habitat_Information.csv")
+write.csv(european_species_habitats, "own datasets/Habitat_Information_Complete.csv")
