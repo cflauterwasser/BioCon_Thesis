@@ -4,11 +4,19 @@
 
 #### Habitat_Information.R
 
-Species list of European mammals and birds with information on suitable habitat types and whether the species can exist in human-modified habitats (Source: IUCN Red List).
+Processing species lists of European mammals and birds, adding information on suitable habitat types and whether the species can exist in human-modified habitats (Source: IUCN Red List).
 
-#### Distribution_Data.R
+#### Occurence_Data.R
 
-Occurence data for mammals (GBIF) and birds (EBBA) in Europe.
+Processing occurence data for mammals (GBIF) and birds (EBBA) in Europe.
+
+#### Climate_Data.R
+
+Processing WorldClim data for required time window
+
+#### Data_Analysis.R
+
+Calculating SR, deltaSR and delta T, in next steps also modelling.
 
 #### own datasets
 
