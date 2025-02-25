@@ -4,6 +4,7 @@
 
 library(tidyverse)
 library(terra)
+library(sf)
 
 
 
@@ -91,7 +92,7 @@ europe_shp <- project(europe_shp, crs(deltaT_90_16))
 deltaT_europe_90_16 <- crop(deltaT_90_16, europe_shp)  # Crop to bounding box of Europe
 deltaT_europe_90_16 <- mask(deltaT_europe_90_16, europe_shp)  # Mask to exact shape
 
-png("plots/deltaT_europe_1990_2016.png",
+png("plots/deltaT_2.5min.png",
     width = 800,
     height = 600,
     res = 100)
@@ -103,18 +104,35 @@ dev.off()
 #___________________________________________________________________________
 # Exporting Data ####
 
-writeRaster(deltaT_europe_90_16, "own datasets/deltaT_europe_1990_2016.tif", overwrite=TRUE)
+writeRaster(deltaT_europe_90_16, "own datasets/deltaT_2.5min.tif", overwrite=TRUE)
+
+
 
 
 #___________________________________________________________________________
 # Fitting on EBBA Grid ####
 
-grid_50km <- st_read("external datasets/EBBA/ebba2_grid50x50_v1/ebba2_grid50x50_v1.shp")
+#grid_50km <- st_read("external datasets/EBBA/ebba2_grid50x50_v1/ebba2_grid50x50_v1.shp") # with islands
+grid_50km <- st_read("external datasets/EBBA/ebba2_grid50x50_v1/ebba2_grid50x50_v1_EditNoIslands.shp") # without islands
 
-if (!identical(crs(deltaT_90_16), crs(grid_50km))) {
-  deltaT_90_16 <- project(deltaT_90_16, grid_50km)
-}
+# Extract mean temperature change for each 50km grid cell
+grid_50km$deltaT <- extract(deltaT_90_16, grid_50km, fun = mean, na.rm = TRUE)[,2]
 
-climate_resampled <- resample(deltaT_90_16, grid_50km, method="bilinear")  # Bilinear for continuous data
+# Convert to sf for ggplot
+grid_50km_sf <- st_as_sf(grid_50km)
 
-climate_final <- mask(climate_resampled, grid_50km)
+head(grid_50km_sf)
+
+
+write.csv(st_drop_geometry(grid_50km_sf), "own datasets/deltaT_50km.csv", row.names = FALSE)
+
+
+# Plot with ggplot
+plot =  ggplot() +
+  geom_sf(data = grid_50km_sf, aes(fill = deltaT)) +
+  scale_fill_viridis_c(name = "Temp Change (°C)") +
+  theme_minimal()
+plot
+
+ggsave("plots/deltaT_50km.png", plot = plot, width = 10, height = 8, dpi = 300, bg = "white")
+
