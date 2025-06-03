@@ -6,6 +6,13 @@ own datasets/m_a2015_cleaned.csv
 own datasets/m_b2000_cleaned.csv
 own datasets/ebba1_cleaned.csv
 own datasets/ebba2_cleaned.csv
+own datasets/m_b2000_cleaned_shortened.csv
+own datasets/m_b2000_cleaned_shortened_masked.csv
+own datasets/m_a2015_cleaned_shortened.csv
+own datasets/m_a2015_cleaned_shortened_masked.csv
+own datasets/simplified_land_use_2000.tif
+own datasets/simplified_land_use_2000.tif.aux.xml
+
 
 # plots
 plots/
