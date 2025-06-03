@@ -726,15 +726,15 @@ write.csv(SR_generalist_m_b2000, "own datasets/SR_generalist_m_b2000_50km.csv", 
 # after 2015
 SR_forest_m_a2015 = SR(forest_m_a2015_dt)
 hist(SR_forest_m_a2015$SR, breaks = 50, col = "lightblue", main = "")
-write.csv(SR_forest_m_a2015, "own datasets/SR_forest_m_b2000_50km.csv", row.names = FALSE)
+write.csv(SR_forest_m_a2015, "own datasets/SR_forest_m_a2015_50km.csv", row.names = FALSE)
 
 SR_agriculture_m_a2015 = SR(agriculture_m_a2015_dt)
 hist(SR_agriculture_m_a2015$SR, breaks = 50, col = "lightblue", main = "")
-write.csv(SR_agriculture_m_a2015, "own datasets/SR_agriculture_m_b2000_50km.csv", row.names = FALSE)
+write.csv(SR_agriculture_m_a2015, "own datasets/SR_agriculture_m_a2015_50km.csv", row.names = FALSE)
 
 SR_generalist_m_a2015 = SR(generalist_m_a2015_dt)
 hist(SR_generalist_m_a2015$SR, breaks = 50, col = "lightblue", main = "")
-write.csv(SR_generalist_m_a2015, "own datasets/SR_generalist_m_b2000_50km.csv", row.names = FALSE)
+write.csv(SR_generalist_m_a2015, "own datasets/SR_generalist_m_a2015_50km.csv", row.names = FALSE)
 
 
 # before 2000
