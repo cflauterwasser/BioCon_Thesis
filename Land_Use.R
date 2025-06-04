@@ -647,77 +647,73 @@ model.sel(glm.bf, glm.ba,
 #___________________________________________________________________________
 # Prep for H's script ####
 
-land_use_2000 <- read.csv("own datasets/LU_2000_50km.csv")
-head(land_use_2000)
+#___________________________________________________________________________
+## Simplify LU raster tif with 5/2 classes ####
 
-library(terra)
+# Step 1: Load the CORINE raster
+r <- rast("external datasets/CORINE Land Cover CLC/u2006_clc2000_v2020_20u1_raster100m/DATA/U2006_CLC2000_V2020_20u1.tif")
 
-# Load your raster
-r <- land_use_raster_2000
+# Step 2: Define your 5 simplified land-use categories
+forest <- c("Broad-leaved forest", "Coniferous forest", "Mixed forest")
+agriculture <- c("Non-irrigated arable land", "Permanently irrigated land", "Rice fields",
+                 "Vineyards", "Fruit trees and berry plantations", "Olive groves",
+                 "Annual crops associated with permanent crops", "Complex cultivation patterns",
+                 "Land principally occupied by agriculture, with significant areas of natural vegetation",
+                 "Agro-forestry areas")
+urban <- c("Continuous urban fabric", "Discontinuous urban fabric", "Industrial or commercial units",
+           "Port areas", "Airports", "Construction sites", "Green urban areas", "Sport and leisure facilities")
+grassland <- c("Natural grasslands", "Pastures")
+other <- c("Road and rail networks and associated land", "Mineral extraction sites", "Dump sites",
+           "Moors and heathland", "Sclerophyllous vegetation", "Transitional woodland-shrub",
+           "Beaches, dunes, sands", "Bare rocks", "Sparsely vegetated areas", "Burnt areas",
+           "Glaciers and perpetual snow", "Inland marshes", "Peat bogs", "Salt marshes", "Salines",
+           "Intertidal flats", "Water courses", "Water bodies", "Coastal lagoons", "Estuaries",
+           "Sea and ocean", "NODATA", "No Land Use")
 
-
-# Step 1: Define simplified categories
-forest_classes <- c("Broad-leaved forest", "Coniferous forest", "Mixed forest")
-agriculture_classes <- c("Non-irrigated arable land", "Permanently irrigated land", "Rice fields",
-                         "Vineyards", "Fruit trees and berry plantations", "Olive groves",
-                         "Annual crops associated with permanent crops", "Complex cultivation patterns",
-                         "Land principally occupied by agriculture, with significant areas of natural vegetation",
-                         "Agro-forestry areas")
-urban_classes <- c("Continuous urban fabric", "Discontinuous urban fabric", "Industrial or commercial units",
-                   "Port areas", "Airports", "Construction sites", "Green urban areas", "Sport and leisure facilities")
-grassland_classes <- c("Natural grasslands", "Pastures")
-other_classes <- c("Road and rail networks and associated land", "Mineral extraction sites", "Dump sites",
-                   "Moors and heathland", "Sclerophyllous vegetation", "Transitional woodland-shrub",
-                   "Beaches, dunes, sands", "Bare rocks", "Sparsely vegetated areas", "Burnt areas",
-                   "Glaciers and perpetual snow", "Inland marshes", "Peat bogs", "Salt marshes", "Salines",
-                   "Intertidal flats", "Water courses", "Water bodies", "Coastal lagoons", "Estuaries",
-                   "Sea and ocean", "NODATA", "No Land Use")
-
-# Combine into a lookup dataframe
-make_lut <- function(class_names, simplified_name) {
-  data.frame(LABEL3 = class_names, simplified = simplified_name, stringsAsFactors = FALSE)
-}
-
-lut <- rbind(
-  make_lut(forest_classes, "forest"),
-  make_lut(agriculture_classes, "agriculture"),
-  make_lut(urban_classes, "urban"),
-  make_lut(grassland_classes, "grassland"),
-  make_lut(other_classes, "other")
+# Step 3: Create a lookup table with numeric class codes
+lookup <- data.frame(
+  LABEL3 = c(forest, agriculture, urban, grassland, other),
+  new_class = c(rep(1, length(forest)),
+                rep(2, length(agriculture)),
+                rep(3, length(urban)),
+                rep(4, length(grassland)),
+                rep(5, length(other)))
 )
 
-# Step 2: Get raster levels
-lvl <- levels(r)[[1]]  # Contains Value + LABEL3
+# Step 4: Get the original category table from the raster
+cats_table <- cats(r)[[1]]
 
-# Step 3: Merge with lookup table
-merged <- merge(lvl, lut, by = "LABEL3", all.x = TRUE)
+# Step 5: Join lookup to original values based on LABEL3
+reclass_table <- left_join(cats_table, lookup, by = "LABEL3")
 
-# Step 4: Map Value -> simplified
-value_to_simplified <- merged[, c("Value", "simplified")]
+# Step 6: Remove any unmatched categories (if any exist)
+reclass_table <- reclass_table[!is.na(reclass_table$new_class), ]
 
-# Drop NA values if needed (optional: keeps only matched LU classes)
-value_to_simplified <- value_to_simplified[!is.na(value_to_simplified$simplified), ]
+# Step 7: Create reclassification matrix (Value = original category code)
+rcl <- as.matrix(reclass_table[, c("Value", "new_class")])
 
-# Step 5: Reclassify raster
-r_numeric <- as.numeric(r)  # Convert factor raster to numeric
-r_simplified <- subst(r_numeric, value_to_simplified$Value, value_to_simplified$simplified)
+# Step 8: Reclassify the raster
+r_simplified <- classify(r, rcl)
 
-writeRaster(r_simplified, 
-            filename = "own datasets/simplified_land_use_2000.tif", 
-            overwrite = TRUE)
+r_simplified <- as.factor(r_simplified)
 
+names(r_simplified) <- "lu_2000_forest_agriculture_urban_grassland_other"
+
+# Step 10: Save the simplified raster
+writeRaster(r_simplified, "own datasets/simplified_land_use_2000.tif", overwrite = TRUE)
+
+plot(r_simplified)
 
 
 #___________________________________________________________________________
 ## EBBA grid .shp to centroids ####
-
-grid$cell50x50 <- st_read("external datasets/EBBA/ebba2_grid50x50_v1/ebba2_grid50x50_v1_EditNoIslandsNoEast.shp")
 
 grid <- st_read("external datasets/EBBA/ebba2_grid50x50_v1/ebba2_grid50x50_v1_EditNoIslandsNoEast.shp")
 
 
 # Create centroids
 centroids <- st_centroid(grid)
+centroids_wgs <- st_transform(centroids, crs = 4326)
 
 # Extract coordinates into columns
 centroids_coords <- st_coordinates(centroids)
@@ -741,6 +737,115 @@ centroids_df_change = centroids_df %>%
 
 write.csv(centroids_df, "own datasets/ebba_grid_50km_centroids.csv", row.names = FALSE)
 write.csv(centroids_df_change, "own datasets/ebba_change_grid_50km_centroids.csv", row.names = FALSE)
+
+
+#___________________________________________________________________________
+## Occurrence data to presence/absence data ####
+ 
+
+ebba1 = fread("own datasets/ebba1_cleaned.csv")
+ebba2 = fread("own datasets/ebba2_cleaned.csv")
+grid <- st_read("external datasets/EBBA/ebba2_grid50x50_v1/ebba2_grid50x50_v1_EditNoIslandsNoEast.shp")
+
+species_matrix <- function(df, site_col = "cell50x50", species_col = "Species", coords_df = NULL) {
+  
+  # Step 1: clean and pivot
+  mat <- df %>%
+    dplyr::select(location = all_of(site_col), species = all_of(species_col)) %>%
+    filter(!is.na(species), species != "") %>%
+    distinct() %>%
+    mutate(presence = 1) %>%
+    pivot_wider(
+      names_from = species,
+      values_from = presence,
+      values_fill = 0
+    )
+  
+  # Step 2: join coordinates if available
+  if (!is.null(coords_df)) {
+    mat <- coords_df %>%
+      rename(location = {{site_col}}) %>%  # ensure name match
+      left_join(mat, by = "location")
+  }
+  
+  return(mat)
+}
+
+rast_occ = function(df, grid) {
+  df_sf <- st_as_sf(df, coords = c("decimalLongitude", "decimalLatitude"), crs = 4326)
+  df_sf <- st_transform(df_sf, st_crs(grid))
+  df_sf <- st_join(df_sf, grid, left = FALSE)
+  df_dt <- as.data.table(df_sf)  # Convert to data.table
+}
+
+ebba1_rast = rast_occ(ebba1, grid)
+ebba1_rast = ebba1_rast %>% 
+  dplyr::select(cell50x50, Species)
+head(ebba1_rast)
+
+ebba1_matrix = species_matrix(ebba1_rast, coords_df = centroids_df)
+ebba2_matrix = species_matrix(ebba2, coords_df = centroids_df)
+
+
+# EBBA Change
+change_grid_50km <- st_read("external datasets/EBBA/ebba2_grid50x50_v1/ebba_grid50x50_change_selfmade_NoIslandsNoEast.shp")
+
+ebba_change = function(df) {
+  df_change = df %>% 
+    filter(location %in% ebba_change_cells)
+}
+
+ebba1_matrix_change = ebba_change(ebba1_matrix)
+ebba2_matrix_change = ebba_change(ebba2_matrix)
+
+write.csv(ebba1_matrix_change, "own datasets/ebba1_matrix_centroids.csv", row.names = FALSE)
+write.csv(ebba2_matrix_change, "own datasets/ebba2_matrix_centroids.csv", row.names = FALSE)
+
+
+
+#___________________________________________________________________________
+## Species classification to binary info table ####
+
+specializations = read.csv("own datasets/Habitat_Classes_Complete.csv") %>% 
+  mutate(species = Binomial.Name) %>% 
+  dplyr::select(species, specialization_AN, specialization_FAG)
+head(specializations)
+
+
+# Step 1: Pivot longer to get all specializations into one column
+long <- specializations %>%
+  pivot_longer(cols = starts_with("specialization"),
+               names_to = "type",
+               values_to = "specialization")
+
+# Step 2: Create binary columns for each specialization type
+# (drop NA just in case there are any)
+classif <- long %>%
+  filter(!is.na(specialization)) %>%
+  mutate(value = 1) %>%
+  pivot_wider(names_from = specialization,
+              values_from = value,
+              values_fill = 0)
+
+# Step 3: If needed, group by species and sum (some birds might have multiple specializations)
+classif <- classif %>%
+  group_by(species) %>%
+  summarise(across(where(is.numeric), sum), .groups = "drop") %>%
+  mutate(forest_sp = forest,
+         agriculture_sp = agriculture,
+         generalist_sp = generalist,
+         natural_sp = natural,
+         human_dominated_sp = human_dominated)
+
+classif_fag = classif %>% 
+  dplyr::select(species, forest_sp, agriculture_sp, generalist_sp)
+
+classif_nhd = classif %>% 
+  dplyr::select(species, natural_sp, human_dominated_sp)
+
+
+write.csv(classif_fag, "own datasets/aves_classification_fag.csv", row.names = FALSE)
+write.csv(classif_nhd, "own datasets/aves_classification_nhd.csv", row.names = FALSE)
 
 
 
