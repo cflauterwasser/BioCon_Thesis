@@ -15,12 +15,12 @@ Pulling, processing and cleaning occurence data for mammals (GBIF) and birds (EB
 
 Processing WorldClim data for required time window to derive deltaT and CCV.
 
-#### Data_Analysis.R
+#### Species_Richness.R
 
 Calculating SR and deltaSR for birds and mammals, also for forest/agriculture/generalist and natural/human-modified classes.
 Also simple linear modelling.
 
-#### Land Use.R
+#### Land_Use.R
 
 Extracting land use data from CLC rasters, fitting it to EBBA grid used for SR- and climate analysis.
 Testing cSAR application with sars package (currently not converging).
