@@ -59,6 +59,7 @@ head(ebba_change_cells)
 ebba_change = function(df) {
   df_change = df %>% 
     filter(cell50x50 %in% ebba_change_cells)
+  return(df_change)
 }
 
 
@@ -1234,8 +1235,9 @@ write.csv(merged_df, "own datasets/SR_classes_AN.csv", row.names = F)
 #___________________________________________________________________________
 # Combining Data ####
 
+## Full EBBA grid ####
+
 deltaSR_birds_50km = read.csv("own datasets/deltaSR_birds_50km.csv") # 'whole' EBBA data set
-#deltaSR_birds_50km = read.csv("own datasets/deltaSR_birds_50km_change.csv") # EBBA Change data set
 deltaSR_mammals_50km = read.csv("own datasets/deltaSR_mammals_50km.csv")
 deltaT_50km = read.csv("own datasets/deltaT_50km_20y.csv")
 ccv_50km = read.csv("own datasets/ccv_50km_20y.csv")
@@ -1274,14 +1276,22 @@ merged_df <- merged_df[, ordered_cols]
 head(merged_df)
 
 
-write.csv(merged_df, "own datasets/analysis_data_50km.csv", row.names = FALSE)
+write.csv(merged_df, "own datasets/analysis_data_50km_full.csv", row.names = FALSE)
+
+
+
+## EBBA Change grid ####
+
+merged_df_change = ebba_change(merged_df)
+
+write.csv(merged_df_change, "own datasets/analysis_data_50km_change.csv", row.names = FALSE)
 
 
 
 #___________________________________________________________________________
 # Histograms ####
-# data = merged_df for EBBA Change
-data = read.csv("own datasets/analysis_data_50km.csv")
+# data_change = read.csv("own datasets/analysis_data_50km_change.csv")
+data_full = read.csv("own datasets/analysis_data_50km.csv")
 
 
 # Number of occurrences mammals
@@ -1289,12 +1299,12 @@ png("plots/hist_Occ_mammals_b2000.png",
     width = 800,
     height = 600,
     res = 100)
-hist(data$occ_m_b2000,
+hist(data_full$occ_m_b2000,
      breaks = 50,
      col = "lightblue",
      main = "Number of Occurrences in Mammals before 2000 (50km)")
-abline(v = mean(data$occ_m_b2000, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
-abline(v = median(data$occ_m_b2000, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
+abline(v = mean(data_full$occ_m_b2000, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
+abline(v = median(data_full$occ_m_b2000, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
 legend("topright",
        legend = c("Mean", "Median"),
        col = c("red", "blue"),
@@ -1307,12 +1317,12 @@ png("plots/hist_Occ_mammals_a2015.png",
     width = 800,
     height = 600,
     res = 100)
-hist(data$occ_m_a2015,
+hist(data_full$occ_m_a2015,
      breaks = 50,
      col = "lightblue",
      main = "Number of Occurrences in Mammals after 2015 (50km)")
-abline(v = mean(data$occ_m_a2015, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
-abline(v = median(data$occ_m_a2015, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
+abline(v = mean(data_full$occ_m_a2015, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
+abline(v = median(data_full$occ_m_a2015, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
 legend("topright",
        legend = c("Mean", "Median"),
        col = c("red", "blue"),
@@ -1327,12 +1337,12 @@ png("plots/hist_SR_birds_ebba1.png",
     width = 800,
     height = 600,
     res = 100)
-hist(data$SR_ebba1,
+hist(data_full$SR_ebba1,
      breaks = 50,
      col = "lightblue",
      main = "Distr. of Species Richness in EBBA1 Birds (50km)")
-abline(v = mean(data$SR_ebba1, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
-abline(v = median(data$SR_ebba1, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
+abline(v = mean(data_full$SR_ebba1, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
+abline(v = median(data_full$SR_ebba1, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
 legend("topright",
        legend = c("Mean", "Median"),
        col = c("red", "blue"),
@@ -1345,12 +1355,12 @@ png("plots/hist_SR_birds_ebba2.png",
     width = 800,
     height = 600,
     res = 100)
-hist(data$SR_ebba2,
+hist(data_full$SR_ebba2,
      breaks = 50,
      col = "lightblue",
      main = "Distr. of Species Richness in EBBA2 Birds (50km)")
-abline(v = mean(data$SR_ebba2, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
-abline(v = median(data$SR_ebba2, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
+abline(v = mean(data_full$SR_ebba2, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
+abline(v = median(data_full$SR_ebba2, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
 legend("topright",
        legend = c("Mean", "Median"),
        col = c("red", "blue"),
@@ -1365,12 +1375,12 @@ png("plots/hist_SR_mammals_b2000.png",
     width = 800,
     height = 600,
     res = 100)
-hist(data$SR_m_b2000,
+hist(data_full$SR_m_b2000,
      breaks = 50,
      col = "lightblue",
      main = "Distr. of Species Richness in GBIF Mammals before 2015 (50km)")
-abline(v = mean(data$SR_m_b2000, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
-abline(v = median(data$SR_m_b2000, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
+abline(v = mean(data_full$SR_m_b2000, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
+abline(v = median(data_full$SR_m_b2000, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
 legend("topright",
        legend = c("Mean", "Median"),
        col = c("red", "blue"),
@@ -1383,12 +1393,12 @@ png("plots/hist_SR_mammals_a2015.png",
     width = 800,
     height = 600,
     res = 100)
-hist(data$SR_m_a2015,
+hist(data_full$SR_m_a2015,
      breaks = 50,
      col = "lightblue",
      main = "Distr. of Species Richness in GBIF Mammals after 2015 (50km)")
-abline(v = mean(data$SR_m_a2015, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
-abline(v = median(data$SR_m_a2015, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
+abline(v = mean(data_full$SR_m_a2015, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
+abline(v = median(data_full$SR_m_a2015, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
 legend("topright",
        legend = c("Mean", "Median"),
        col = c("red", "blue"),
@@ -1403,12 +1413,12 @@ png("plots/hist_deltaSR_birds.png",
     width = 800,
     height = 600,
     res = 100)
-hist(data$deltaSR_birds,
+hist(data_full$deltaSR_birds,
      breaks = 50,
      col = "lightblue",
      main = "Distr. of Species Richness Change in EBBA Birds (50km)")
-abline(v = mean(data$deltaSR_birds, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
-abline(v = median(data$deltaSR_birds, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
+abline(v = mean(data_full$deltaSR_birds, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
+abline(v = median(data_full$deltaSR_birds, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
 legend("topright",
        legend = c("Mean", "Median"),
        col = c("red", "blue"),
@@ -1421,12 +1431,12 @@ png("plots/hist_deltaSR_mammals.png",
     width = 800,
     height = 600,
     res = 100)
-hist(data$deltaSR_mammals,
+hist(data_full$deltaSR_mammals,
      breaks = 50,
      col = "lightblue",
      main = "Distr. of Species Richness Change in GBIF Mammals (50km)")
-abline(v = mean(data$deltaSR_mammals, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
-abline(v = median(data$deltaSR_mammals, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
+abline(v = mean(data_full$deltaSR_mammals, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
+abline(v = median(data_full$deltaSR_mammals, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
 legend("topright",
        legend = c("Mean", "Median"),
        col = c("red", "blue"),
@@ -1453,12 +1463,12 @@ png("plots/hist_delta_temperature.png",
     width = 800,
     height = 600,
     res = 100)
-hist(data$deltaT,
+hist(data_full$deltaT,
      breaks = 50,
      col = "lightblue",
      main = "Distr. of Temperature Change (50km)")
-abline(v = mean(data$deltaT, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
-abline(v = median(data$deltaT, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
+abline(v = mean(data_full$deltaT, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
+abline(v = median(data_full$deltaT, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
 legend("topright",
        legend = c("Mean", "Median"),
        col = c("red", "blue"),
@@ -1473,12 +1483,12 @@ png("plots/hist_climate_change_velocity.png",
     width = 800,
     height = 600,
     res = 100)
-hist(data$ccv,
+hist(data_full$ccv,
      breaks = 50,
      col = "lightblue",
      main = "Distr. of climate change velocity (50km)")
-abline(v = mean(data$ccv, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
-abline(v = median(data$ccv, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
+abline(v = mean(data_full$ccv, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
+abline(v = median(data_full$ccv, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
 legend("topright",
        legend = c("Mean", "Median"),
        col = c("red", "blue"),
@@ -1491,12 +1501,12 @@ png("plots/hist_log_climate_change_velocity.png",
     width = 800,
     height = 600,
     res = 100)
-hist(data$log_ccv,
+hist(data_full$log_ccv,
      breaks = 50,
      col = "lightblue",
      main = "Distr. of climate change velocity (log) (50km)")
-abline(v = mean(data$log_ccv, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
-abline(v = median(data$log_ccv, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
+abline(v = mean(data_full$log_ccv, na.rm = TRUE), col = "red", lwd = 2, lty = 2)
+abline(v = median(data_full$log_ccv, na.rm = TRUE), col = "blue", lwd = 2, lty = 3)
 legend("topright",
        legend = c("Mean", "Median"),
        col = c("red", "blue"),
@@ -1511,7 +1521,8 @@ dev.off()
 #___________________________________________________________________________
 # Modelling ####
 
-data = read.csv("own datasets/analysis_data_50km.csv")
+data_full = read.csv("own datasets/analysis_data_50km_full.csv")
+data_change = read.csv("own datasets/analysis_data_50km_change.csv")
 
 
 
@@ -1521,39 +1532,39 @@ data = read.csv("own datasets/analysis_data_50km.csv")
 #___________________________________________________________________________
 ### LMs ####
 
-lm1.1 = lm(deltaSR_birds  ~ deltaT,
-           data = data)
-summary(lm1.1)
+lm_b_deltaT_full = lm(deltaSR_birds  ~ deltaT,
+           data = data_full)
+summary(lm_b_deltaT_full)
 par(mfrow = c(2, 2))
-plot(lm1.1)
+plot(lm_b_deltaT_full)
 
-lm1.2 = lm(deltaSR_birds  ~ log_ccv,
-           data = data)
-summary(lm1.2)
+lm_b_logccv_full = lm(deltaSR_birds  ~ log_ccv,
+           data = data_full)
+summary(lm_b_logccv_full)
 par(mfrow = c(2, 2))
-plot(lm1.2)
+plot(lm_b_logccv_full)
 
 
-lm2.1 = lm(deltaSR_mammals  ~ deltaT,
-           data = data)
-summary(lm2.1)
+lm_m_deltaT_full = lm(deltaSR_mammals  ~ deltaT,
+           data = data_full)
+summary(lm_m_deltaT_full)
 par(mfrow = c(2, 2))
-plot(lm2.1)
+plot(lm_m_deltaT_full)
 
-lm2.2 = lm(deltaSR_mammals  ~ log_ccv,
-           data = data)
-summary(lm2.2)
+lm_m_logccv_full = lm(deltaSR_mammals  ~ log_ccv,
+           data = data_full)
+summary(lm_m_logccv_full)
 par(mfrow = c(2, 2))
-plot(lm2.2)
+plot(lm_m_logccv_full)
 
 lm2.3 = lm(deltaSR_mammals  ~ deltaT + delta_occ_m,
-           data = data)
+           data = data_full)
 summary(lm2.3)
 par(mfrow = c(2, 2))
 plot(lm2.3)
 
 lm2.4 = lm(deltaSR_mammals  ~ log_ccv + delta_occ_m,
-           data = data)
+           data = data_full)
 summary(lm2.4)
 par(mfrow = c(2, 2))
 plot(lm2.4)
@@ -1563,34 +1574,34 @@ plot(lm2.4)
 #___________________________________________________________________________
 ### GLMs ####
 
-glm1.1 = glm(deltaSR_birds  ~ deltaT,
-             data = data,
+glm_b_deltaT_full = glm(deltaSR_birds  ~ deltaT,
+             data = data_full,
              family = gaussian)
-summary(glm1.1)
+summary(glm_b_deltaT_full)
 
-glm1.2 = glm(deltaSR_birds  ~ log_ccv,
-             data = data,
+glm_b_logccv_full = glm(deltaSR_birds  ~ log_ccv,
+             data = data_full,
              family = gaussian)
-summary(glm1.2)
+summary(glm_b_logccv_full)
 
 
-glm2.1 = glm(deltaSR_mammals  ~ deltaT,
-             data = data,
+glm_m_deltaT_full = glm(deltaSR_mammals  ~ deltaT,
+             data = data_full,
              family = gaussian)
-summary(glm2.1)
+summary(glm_m_deltaT_full)
 
-glm2.2 = glm(deltaSR_mammals  ~ log_ccv,
-             data = data,
+glm_m_logccv_full = glm(deltaSR_mammals  ~ log_ccv,
+             data = data_full,
              family = gaussian)
-summary(glm2.2)
+summary(glm_m_logccv_full)
 
 glm2.3 = glm(deltaSR_mammals  ~ deltaT + delta_occ_m,
-             data = data,
+             data = data_full,
              family = gaussian)
 summary(glm2.3)
 
 glm2.4 = glm(deltaSR_mammals  ~ log_ccv + delta_occ_m,
-             data = data,
+             data = data_full,
              family = gaussian)
 summary(glm2.4)
 
@@ -1599,36 +1610,36 @@ summary(glm2.4)
 #___________________________________________________________________________
 ### EBBA Change ####
 
-lm1.1c = lm(deltaSR_birds  ~ deltaT,
-            data = data)
-summary(lm1.1c)
+lm_b_deltaT_change = lm(deltaSR_birds  ~ deltaT,
+            data = data_change)
+summary(lm_b_deltaT_change)
 par(mfrow = c(2, 2))
-plot(lm1.1c)
+plot(lm_b_deltaT_change)
 
-lm1.2c = lm(deltaSR_birds  ~ log_ccv,
-            data = data)
-summary(lm1.2c)
+lm_b_logccv_change = lm(deltaSR_birds  ~ log_ccv,
+            data = data_change)
+summary(lm_b_logccv_change)
 par(mfrow = c(2, 2))
-plot(lm1.2c)
+plot(lm_b_logccv_change)
 
 
-glm1.1c = glm(deltaSR_birds  ~ deltaT,
-              data = data,
+glm_b_deltaT_change = glm(deltaSR_birds  ~ deltaT,
+              data = data_change,
               family = gaussian)
-summary(glm1.1c)
+summary(glm_b_deltaT_change)
 
-glm1.2c = glm(deltaSR_birds  ~ log_ccv,
-              data = data,
+glm_b_logccv_change = glm(deltaSR_birds  ~ log_ccv,
+              data = data_change,
               family = gaussian)
-summary(glm1.2c)
+summary(glm_b_logccv_change)
 
-model.sel(lm1.1c, lm1.2c, 
-          glm1.1c, glm1.2c,
+model.sel(lm_b_deltaT_change, lm_b_logccv_change, 
+          glm_b_deltaT_change, glm_b_logccv_change,
           rank = "AICc")
 
 
 # deltaT
-plot = ggplot(data, aes(x = deltaT, y = deltaSR_birds)) +
+plot = ggplot(data_change, aes(x = deltaT, y = deltaSR_birds)) +
   geom_point(alpha = 0.2,
              shape = 16,
              size = 2) +
@@ -1650,7 +1661,7 @@ ggsave("plots/regline_SR_birds_change~deltaT.png", plot = plot, width = 10, heig
 
 
 # log CCV
-plot = ggplot(data, aes(x = log_ccv, y = deltaSR_birds)) +
+plot = ggplot(data_change, aes(x = log_ccv, y = deltaSR_birds)) +
   geom_point(alpha = 0.2,
              shape = 16,
              size = 2) +
@@ -1674,19 +1685,31 @@ ggsave("plots/regline_SR_birds_change~log_CCV.png", plot = plot, width = 10, hei
 
 
 #___________________________________________________________________________
-### AIC comparison ####
+### AIC comparison and coefficient export ####
 
-model.sel(lm1.1, lm1.2, lm2.1, lm2.2, lm2.3, lm2.4,
-          glm1.1, glm1.2, glm2.1, glm2.2, glm2.3, glm2.4,
-          lm1.1c, lm1.2c, 
-          glm1.1c, glm1.2c,
+model.sel(lm_b_deltaT_full, lm_b_logccv_full, lm_m_deltaT_full, lm_m_logccv_full, lm2.3, lm2.4,
+          glm_b_deltaT_full, glm_b_logccv_full, glm_m_deltaT_full, glm_m_logccv_full, glm2.3, glm2.4,
+          lm_b_deltaT_change, lm_b_logccv_change, 
+          glm_b_deltaT_change, glm_b_logccv_change,
           rank = "AICc")
+
+
+bT <- coef(glm_b_deltaT_change)["deltaT"]
+bC <- coef(glm_b_logccv_change)["log_ccv"]
+
+coefficients_df <- data.frame(
+  Variable = c("deltaT", "log_ccv"),
+  Coefficient = c(bT, bC)
+)
+
+write.csv(coefficients_df, "own datasets/temperature_coefficients_EBBA_change.csv", row.names = FALSE)
+
 
 
 #___________________________________________________________________________
 ## Plotting ####
 
-long_data <- data %>%
+long_data <- data_change %>%
   gather(key = "Species", value = "delta_SR", deltaSR_mammals, deltaSR_birds)
 
 # Plotting
@@ -1755,7 +1778,7 @@ ggsave("plots/regline_SR_mammals_birds~deltaT.png", plot = plot, width = 10, hei
 #___________________________________________________________________________
 ### CCV ####
 
-long_data <- data %>%
+long_data <- data_change %>%
   gather(key = "Species", value = "delta_SR", deltaSR_mammals, deltaSR_birds)
 
 # Plotting
