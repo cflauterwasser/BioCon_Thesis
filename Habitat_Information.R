@@ -82,48 +82,51 @@ str(european_mammals)
 # european_birds = read.csv("own datasets/Species_List_Birds.csv")
 european_birds = read.csv("own datasets/Species_List_Birds_Reduced_Change.csv") # only in reduced extent
 
+correct_bird_taxonomy = function(df) {
+  df_corrected = df %>% 
+    mutate(Species = recode(Species, 
+                            "Aquila clanga" = "Clanga clanga",
+                            "Aquila pomarina" = "Clanga pomarina",
+                            "Charadrius morinellus" = "Eudromias morinellus",
+                            "Chroicocephalus genei" = "Larus genei",
+                            "Chroicocephalus ridibundus" = "Larus ridibundus",
+                            "Ichthyaetus audouinii" = "Larus audouinii",
+                            "Ichthyaetus melanocephalus" = "Larus melanocephalus",
+                            "Stercorarius skua" = "Catharacta skua",
+                            "Bonasa bonasia" = "Tetrastes bonasia",
+                            "Porzana parva" = "Zapornia parva",
+                            "Porzana pusilla" = "Zapornia pusilla",
+                            "Calandrella rufescens" = "Alaudala rufescens",
+                            "Coloeus monedula" = "Corvus monedula",
+                            "Acanthis hornemanni" = "Acanthis flammea",
+                            "Cyanecula svecica" = "Luscinia svecica",
+                            "Erythropygia galactotes" = "Cercotrichas galactotes",
+                            "Parus montanus" = "Poecile montanus",
+                            "Phylloscopus sibillatrix" = "Phylloscopus sibilatrix",
+                            "Sinosuthora alphonsiana" = "Suthora alphonsiana",
+                            "Sinosuthora webbiana" = "Suthora webbiana",
+                            "Sylvia cantillans" = "Curruca cantillans",
+                            "Sylvia communis" = "Curruca communis",
+                            "Sylvia conspicillata" = "Curruca conspicillata",
+                            "Sylvia crassirostris" = "Curruca crassirostris",
+                            "Sylvia curruca" = "Curruca curruca",
+                            "Sylvia hortensis" = "Curruca hortensis",
+                            "Sylvia melanocephala" = "Curruca melanocephala",
+                            "Sylvia nisoria" = "Curruca nisoria",
+                            "Sylvia ruppeli" = "Curruca ruppeli",
+                            "Sylvia subalpina" = "Curruca subalpina",
+                            "Sylvia undata" = "Curruca undata",
+                            "Dendrocoptes medius" = "Leiopicus medius",
+                            "Oceanodroma castro" = "Hydrobates castro",
+                            "Oceanodroma leucorhoa" = "Hydrobates leucorhous",
+                            "Psittacula eupatria" = "Palaeornis eupatria",
+                            "Psittacula krameri" = "Alexandrinus krameri",
+                            "Microcarbo pygmeus" = "Microcarbo pygmaeus"
+    ))
+  return(df_corrected)
+}
 
-european_birds = european_birds %>% 
-  mutate(Species = recode(Species, 
-                          "Aquila clanga" = "Clanga clanga",
-                          "Aquila pomarina" = "Clanga pomarina",
-                          "Charadrius morinellus" = "Eudromias morinellus",
-                          "Chroicocephalus genei" = "Larus genei",
-                          "Chroicocephalus ridibundus" = "Larus ridibundus",
-                          "Ichthyaetus audouinii" = "Larus audouinii",
-                          "Ichthyaetus melanocephalus" = "Larus melanocephalus",
-                          "Stercorarius skua" = "Catharacta skua",
-                          "Bonasa bonasia" = "Tetrastes bonasia",
-                          "Porzana parva" = "Zapornia parva",
-                          "Porzana pusilla" = "Zapornia pusilla",
-                          "Calandrella rufescens" = "Alaudala rufescens",
-                          "Coloeus monedula" = "Corvus monedula",
-                          "Acanthis hornemanni" = "Acanthis flammea",
-                          "Cyanecula svecica" = "Luscinia svecica",
-                          "Erythropygia galactotes" = "Cercotrichas galactotes",
-                          "Parus montanus" = "Poecile montanus",
-                          "Phylloscopus sibillatrix" = "Phylloscopus sibilatrix",
-                          "Sinosuthora alphonsiana" = "Suthora alphonsiana",
-                          "Sinosuthora webbiana" = "Suthora webbiana",
-                          "Sylvia cantillans" = "Curruca cantillans",
-                          "Sylvia communis" = "Curruca communis",
-                          "Sylvia conspicillata" = "Curruca conspicillata",
-                          "Sylvia crassirostris" = "Curruca crassirostris",
-                          "Sylvia curruca" = "Curruca curruca",
-                          "Sylvia hortensis" = "Curruca hortensis",
-                          "Sylvia melanocephala" = "Curruca melanocephala",
-                          "Sylvia nisoria" = "Curruca nisoria",
-                          "Sylvia ruppeli" = "Curruca ruppeli",
-                          "Sylvia subalpina" = "Curruca subalpina",
-                          "Sylvia undata" = "Curruca undata",
-                          "Dendrocoptes medius" = "Leiopicus medius",
-                          "Oceanodroma castro" = "Hydrobates castro",
-                          "Oceanodroma leucorhoa" = "Hydrobates leucorhous",
-                          "Psittacula eupatria" = "Palaeornis eupatria",
-                          "Psittacula krameri" = "Alexandrinus krameri",
-                          "Microcarbo pygmeus" = "Microcarbo pygmaeus"
-  ))
-
+european_birds = correct_bird_taxonomy(european_birds)
 
 european_birds = european_birds %>%
   distinct(Species, .keep_all = TRUE) # removing possible duplicates
@@ -135,7 +138,6 @@ european_birds = european_birds |>
 
 european_birds = european_birds [, c("Class", "Order", "Family", "Genus", "Species")]
 str(european_birds)
-
 
 
 
