@@ -534,7 +534,7 @@ filter_occurrences_by_grid <- function(occ_data, grid_shapefile) {
   
   # Convert back to dataframe (removing geometry column but keeping lat/lon)
   filtered_df <- as.data.frame(filtered_sf) %>%
-    select(-geometry)  # Remove geometry column if not needed
+    dplyr::select(-geometry)  # Remove geometry column if not needed
   
   return(filtered_df)
 }
@@ -737,7 +737,7 @@ taxa_info <- unique(ebba2$birdlife_scientific_name) %>%
 
 
 taxa_info <- taxa_info %>%
-  select(canonicalName, order, family)
+  dplyr::select(canonicalName, order, family)
 
 taxa_info <- taxa_info %>%
   rename(birdlife_scientific_name = canonicalName)
@@ -751,9 +751,7 @@ ebba2 <- ebba2 %>%
   rename(Order = order, Family = family)
 
 
-
 str(ebba2)
-
 
 
 
@@ -764,7 +762,7 @@ str(ebba2)
 # Adjust column names to have uppercase first letters
 colnames(ebba1) <- tools::toTitleCase(colnames(ebba1))
 
-correct.taxonomy.b = function(df) {
+correct.taxonomy.b1 = function(df) {
   df1 = df %>% 
     mutate(Species = recode(Species, 
                             "Chionomys syriacus" = "Chionomys nivalis",
@@ -781,7 +779,7 @@ correct.taxonomy.b = function(df) {
                             "Nannospalax leucodon" = "Spalax leucodon",
                             "Clanga clanga" = "Aquila clanga",
                             "Clanga pomarina" = "Aquila pomarina",
-                            "Eudromias morinellus" = "Charadrius morinellus",
+                           "Eudromias morinellus" = "Charadrius morinellus",
                             "Larus genei" = "Chroicocephalus genei",
                             "Larus ridibundus" = "Chroicocephalus ridibundus",
                             "Larus audouinii" = "Ichthyaetus audouinii",
@@ -820,11 +818,9 @@ correct.taxonomy.b = function(df) {
   return(df1)
 }
 
-ebba1.1 = correct.taxonomy.b(ebba1)
-ebba2.1 = correct.taxonomy.b(ebba2)
 
-uniqueN(ebba1.1$Species)/uniqueN(ebba1$Species)
-uniqueN(ebba2.1$Species)/uniqueN(ebba2$Species)
+ebba1.1 = correct.taxonomy.b1(ebba1)
+ebba2.1 = correct.taxonomy.b1(ebba2)
 
 
 
