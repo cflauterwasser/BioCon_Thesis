@@ -6,6 +6,7 @@ library(sf)
 library(tidyverse)
 library(exactextractr)
 library(MuMIn)
+library(data.table)
 
 
 
@@ -216,7 +217,7 @@ write.csv(land_use_fa_2018, "own datasets/LU_2018_50km.csv", row.names = FALSE)
 
 # Load datasets
 land_use_2000 <- read.csv("own datasets/LU_2000_50km.csv")
-#land_use_2018 <- read.csv("own datasets/LU_2018_50km.csv")
+land_use_2018 <- read.csv("own datasets/LU_2018_50km.csv")
 
 grid <- st_read("external datasets/EBBA/ebba2_grid50x50_v1/ebba2_grid50x50_v1_EditNoIslandsNoEast.shp")
 grid <- grid %>%
@@ -232,6 +233,8 @@ SR_specializations_AN = read.csv("own datasets/SR_classes_AN.csv")
 
 #___________________________________________________________________________
 ## cSAR Birds For/Agr/Oth ####
+
+# 2000
 
 df_cSAR_FAG = grid %>% 
   st_drop_geometry() %>% 
@@ -252,8 +255,6 @@ df_cSAR_FAG1_change = df_cSAR_FAG1 %>%
 
 # Fit dataframe format to sars package needs
 
-library(sars)
-
 
 df_cSAR_FAG_b <- df_cSAR_FAG1_change %>%
   mutate(
@@ -266,17 +267,65 @@ df_cSAR_FAG_b <- df_cSAR_FAG1_change %>%
     Spcs_A = SR_agriculture_ebba1,
     Spcs_O = SR_generalist_ebba1
   ) %>%
-  dplyr::select(cell50x50, Area_F, Area_A, Area_G, Area_U, Area_O, Spcs_F, Spcs_A, Spcs_O) %>%
-  column_to_rownames("cell50x50")
+  dplyr::select(cell50x50, Area_F, Area_A, Area_G, Area_U, Area_O, Spcs_F, Spcs_A, Spcs_O)# %>%
+  #column_to_rownames("cell50x50")
 
 
 str(df_cSAR_FAG_b)
 
-write.csv(df_cSAR_FAG_b, "own datasets/cSAR_FAG_b.csv", row.names = TRUE)
+write.csv(df_cSAR_FAG_b, "own datasets/cSAR_FAG_b_2000.csv", row.names = F)
+
+
+
+# 2018
+
+df_cSAR_FAG = grid %>% 
+  st_drop_geometry() %>% 
+  left_join(land_use_2018, by = "cell50x50")
+
+df_cSAR_FAG1 = df_cSAR_FAG %>% 
+  left_join(SR_specializations_FAG, by = "cell50x50")
+str(df_cSAR_FAG1)
+
+
+# only keep Change Grid Cells for bird cSAR
+
+ebba_change_cells = change_grid$cell50x50
+
+df_cSAR_FAG1_change = df_cSAR_FAG1 %>% 
+  filter(cell50x50 %in% ebba_change_cells)
+
+
+# Fit dataframe format to sars package needs
+
+
+df_cSAR_FAG_b <- df_cSAR_FAG1_change %>%
+  mutate(
+    Area_F = coalesce(forest_abs, 0),
+    Area_A = coalesce(agriculture_abs, 0),
+    Area_G = coalesce(grassland_abs, 0),
+    Area_U = coalesce(urban_abs, 0),
+    Area_O = coalesce(other_abs, 0),
+    Spcs_F = SR_forest_ebba2,
+    Spcs_A = SR_agriculture_ebba2,
+    Spcs_O = SR_generalist_ebba2
+  ) %>%
+  dplyr::select(cell50x50, Area_F, Area_A, Area_G, Area_U, Area_O, Spcs_F, Spcs_A, Spcs_O)# %>%
+  #column_to_rownames("cell50x50")
+
+
+str(df_cSAR_FAG_b)
+
+write.csv(df_cSAR_FAG_b, "own datasets/cSAR_FAG_b_2018.csv", row.names = F)
+
+
+
+#_________________________________________________________________________________
+### Apply cSAR package ####
+
+library(sars)
 
 #df_cSAR_FAG_b = read.csv("own datasets/cSAR_FAG_b.csv")
-
-
 
 stpr <- matrix(c(1.000e+00, 1.237e-03, 1.984e-03, 1.006e-03, 1.572e-03, 1.534e-01,
                  1.148e-03, 1.000e+00, 1.763e-03, 1.391e-03, 1.809e-03, 1.597e-01,
@@ -741,15 +790,15 @@ write.csv(centroids_df_change, "own datasets/ebba_change_grid_50km_centroids.csv
 
 #___________________________________________________________________________
 ## Occurrence data to presence/absence data ####
- 
 
 ebba1 = fread("own datasets/ebba1_cleaned.csv")
 ebba2 = fread("own datasets/ebba2_cleaned.csv")
 grid <- st_read("external datasets/EBBA/ebba2_grid50x50_v1/ebba2_grid50x50_v1_EditNoIslandsNoEast.shp")
 
+
 species_matrix <- function(df, site_col = "cell50x50", species_col = "Species", coords_df = NULL) {
   
-  # Step 1: clean and pivot
+  #clean and pivot
   mat <- df %>%
     dplyr::select(location = all_of(site_col), species = all_of(species_col)) %>%
     filter(!is.na(species), species != "") %>%
@@ -761,7 +810,7 @@ species_matrix <- function(df, site_col = "cell50x50", species_col = "Species", 
       values_fill = 0
     )
   
-  # Step 2: join coordinates if available
+  #join coordinates if available
   if (!is.null(coords_df)) {
     mat <- coords_df %>%
       rename(location = {{site_col}}) %>%  # ensure name match
@@ -782,6 +831,54 @@ ebba1_rast = rast_occ(ebba1, grid)
 ebba1_rast = ebba1_rast %>% 
   dplyr::select(cell50x50, Species)
 head(ebba1_rast)
+
+
+# correct for IUCN taxonomy
+
+ebba1_rast = ebba1_rast %>% 
+  mutate(Species = recode(Species, 
+                          "Aquila clanga" = "Clanga clanga",
+                          "Aquila pomarina" = "Clanga pomarina",
+                          "Charadrius morinellus" = "Eudromias morinellus",
+                          "Chroicocephalus genei" = "Larus genei",
+                          "Chroicocephalus ridibundus" = "Larus ridibundus",
+                          "Ichthyaetus audouinii" = "Larus audouinii",
+                          "Ichthyaetus melanocephalus" = "Larus melanocephalus",
+                          "Stercorarius skua" = "Catharacta skua",
+                          "Bonasa bonasia" = "Tetrastes bonasia",
+                          "Porzana parva" = "Zapornia parva",
+                          "Porzana pusilla" = "Zapornia pusilla",
+                          "Calandrella rufescens" = "Alaudala rufescens",
+                          "Coloeus monedula" = "Corvus monedula",
+                          "Acanthis hornemanni" = "Acanthis flammea",
+                          "Cyanecula svecica" = "Luscinia svecica",
+                          "Erythropygia galactotes" = "Cercotrichas galactotes",
+                          "Parus montanus" = "Poecile montanus",
+                          "Phylloscopus sibillatrix" = "Phylloscopus sibilatrix",
+                          "Sinosuthora alphonsiana" = "Suthora alphonsiana",
+                          "Sinosuthora webbiana" = "Suthora webbiana",
+                          "Sylvia cantillans" = "Curruca cantillans",
+                          "Sylvia communis" = "Curruca communis",
+                          "Sylvia conspicillata" = "Curruca conspicillata",
+                          "Sylvia crassirostris" = "Curruca crassirostris",
+                          "Sylvia curruca" = "Curruca curruca",
+                          "Sylvia hortensis" = "Curruca hortensis",
+                          "Sylvia melanocephala" = "Curruca melanocephala",
+                          "Sylvia nisoria" = "Curruca nisoria",
+                          "Sylvia ruppeli" = "Curruca ruppeli",
+                          "Sylvia subalpina" = "Curruca subalpina",
+                          "Sylvia undata" = "Curruca undata",
+                          "Dendrocoptes medius" = "Leiopicus medius",
+                          "Oceanodroma castro" = "Hydrobates castro",
+                          "Oceanodroma leucorhoa" = "Hydrobates leucorhous",
+                          "Psittacula eupatria" = "Palaeornis eupatria",
+                          "Psittacula krameri" = "Alexandrinus krameri",
+                          "Microcarbo pygmeus" = "Microcarbo pygmaeus"
+  ))
+
+ebba1_rast <- ebba1_rast %>%
+  dplyr::filter(Species != "Turnix sylvaticus")
+
 
 ebba1_matrix = species_matrix(ebba1_rast, coords_df = centroids_df)
 ebba2_matrix = species_matrix(ebba2, coords_df = centroids_df)
@@ -837,15 +934,75 @@ classif <- classif %>%
          natural_sp = natural,
          human_dominated_sp = human_dominated)
 
-classif_fag = classif %>% 
+# Filter to only include species present in ebba1_matrix_change
+filtered_classif1 <- classif %>%
+  filter(species %in% colnames(ebba1_matrix_change)[4:ncol(ebba1_matrix_change)])
+
+# View the filtered DataFrame
+head(filtered_classif1)
+
+filtered_classif1 = dplyr::distinct(filtered_classif1, species, .keep_all = TRUE)
+
+
+classif_fag = filtered_classif1 %>% 
   dplyr::select(species, forest_sp, agriculture_sp, generalist_sp)
 
-classif_nhd = classif %>% 
+classif_nhd = filtered_classif1 %>% 
   dplyr::select(species, natural_sp, human_dominated_sp)
 
 
-write.csv(classif_fag, "own datasets/aves_classification_fag.csv", row.names = FALSE)
-write.csv(classif_nhd, "own datasets/aves_classification_nhd.csv", row.names = FALSE)
+write.csv(classif_fag, "own datasets/aves_classification_EBBA1_fag.csv", row.names = FALSE)
+write.csv(classif_nhd, "own datasets/aves_classification_EBBA1_nhd.csv", row.names = FALSE)
+
+
+
+# Filter to only include species present in ebba1_matrix_change
+filtered_classif2 <- classif %>%
+  filter(species %in% colnames(ebba2_matrix_change)[4:ncol(ebba2_matrix_change)])
+
+# View the filtered DataFrame
+head(filtered_classif2)
+
+filtered_classif2 = dplyr::distinct(filtered_classif2, species, .keep_all = TRUE)
+
+
+classif_fag = filtered_classif2 %>% 
+  dplyr::select(species, forest_sp, agriculture_sp, generalist_sp)
+
+classif_nhd = filtered_classif2 %>% 
+  dplyr::select(species, natural_sp, human_dominated_sp)
+
+
+write.csv(classif_fag, "own datasets/aves_classification_EBBA2_fag.csv", row.names = FALSE)
+write.csv(classif_nhd, "own datasets/aves_classification_EBBA2_nhd.csv", row.names = FALSE)
+
+
+
+#___________________________________________________________________________
+# Correlation Matrix between Land Uses ####
+
+lu2000 = read.csv("own datasets/LU_2000_50km.csv")
+
+cor_matrix = cor(lu2000[, -c(1,7:11)])
+
+
+
+library(corrplot)
+
+plot = corrplot(cor_matrix, method = "circle", type = "upper", 
+         tl.col = "black", tl.srt = 45)
+
+png("plots/corrplot_lu.png", width = 800, height = 800)
+corrplot(cor_matrix, method = "circle", type = "upper", 
+         tl.col = "black", tl.srt = 45, tl.cex = 2)
+dev.off()
+
+
+
+#___________________________________________________________________________
+# NEW EQUATION ####
+
+
 
 
 
